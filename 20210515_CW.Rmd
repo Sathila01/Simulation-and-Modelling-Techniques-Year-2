@@ -1,0 +1,332 @@
+---
+title: "20210515_CM2605_Coursework"
+author: "Sathila_Samarasinghe"
+date: "`r Sys.Date()`"
+output:
+  word_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Question 1
+a)
+
+```{r}
+set.seed(17) #for reproducibility
+
+#generate 10000 weight values for N~(60, 3^2)
+weightKG <- rnorm(10000, mean = 60, sd = 3)
+
+#generate 10000 height values for N~(1.6, 0.1^2)
+heightM <- rnorm(10000, mean = 1.6, sd = 0.1)
+
+#10000 BMI values
+bmi <- weightKG / heightM ^ 2
+bmi
+```
+b)
+```{r}
+#b)
+#Empirical distribution histogram of BMI
+hist(bmi, breaks = 25, main = "Histogram of BMI distribution", xlab = "BMI", col = "grey")
+```
+c)
+```{r}
+#c)
+#approximate mean
+meanBMI = mean(bmi)
+
+#variance
+varianceBMI = var(bmi)
+
+meanBMI
+varianceBMI
+```
+d)
+```{r}
+#d)
+#P(BMI >= 25)
+sumOfValuesGreaterThan25 = sum(bmi >= 25)
+probGreaterThan25 = sumOfValuesGreaterThan25 / length(bmi)
+probGreaterThan25
+```
+Question 2
+a)
+```{r}
+set.seed(17) 
+
+probPlayer1WinsPlayer1Serves = 0.55
+probPlayer1WinsPlayer2Serves = 0.40
+
+#Function to start game with rule A
+startA = function(){
+  
+  player1Score = 0
+  player2Score = 0
+  
+  # Game continues until one player reaches a score of 2
+  while (player1Score < 2 && player2Score < 2){
+    
+    
+    if (player1Score == player2Score){
+      # Player 1 serves when scores are tied(0,0)
+      
+      probWin = probPlayer1WinsPlayer1Serves
+      
+    }
+    else if (player1Score > player2Score){
+      # Player 1 serves after winning 1st point(1,0)
+      
+      probWin = probPlayer1WinsPlayer1Serves
+      
+    }
+    else{
+      # Player 2 serves after winning 1st point(0,1)
+      
+      probWin = probPlayer1WinsPlayer2Serves
+      
+    }
+       
+    # Randomly determine who wins the point
+    if (runif(1) < probWin){
+      
+      player1Score = player1Score+1 # Player 1 wins the point
+    }
+    else{
+      
+      player2Score = player2Score+1 # Player 2 wins the point
+    }
+  }
+  
+  #Return TRUE if player 1 won the game, FALSE otherwise
+  return((player1Score == 2))
+}
+
+#Function to start game with rule B
+startB = function(){
+  
+  player1Score = 0
+  player2Score = 0
+  
+  while (player1Score < 2 && player2Score < 2){
+    
+    
+    if (player1Score == player2Score){
+      # Player1 serves when scores are tied(0,0)
+      
+      probWin = probPlayer1WinsPlayer1Serves
+      
+    }
+    else if (player1Score > player2Score){
+      # Player2 serves after losing 1st point(1,0)
+      
+      probWin = probPlayer1WinsPlayer2Serves
+      
+    }
+    else{
+      # Player1 serves after losing 1st point(0,1)
+      
+      probWin = probPlayer1WinsPlayer1Serves
+      
+    }
+    
+    # Randomly determine who wins the point
+    if (runif(1) < probWin){
+      
+      player1Score = player1Score+1 # Player 1 wins the point
+    }
+    else{
+      
+      player2Score = player2Score+1 # Player 2 wins the point
+    }
+  }
+  return((player1Score == 2)) # Return TRUE if player 1 won the game, FALSE otherwise
+}
+
+#Simulate the game 1000 times
+set.seed(17)
+
+gamesA = replicate(1000, startA())
+gamesB = replicate(1000, startB())
+
+```
+a) 1.Estimate the winning probability of Player 1 under service rule A
+```{r}
+probWinA = sum(gamesA) / length(gamesA)
+probWinA
+```
+
+a) 2.Estimate the winning probability of Player 1 under service rule B
+```{r}
+probWinB = sum(gamesB) / length(gamesB)
+probWinB
+```
+b)
+```{r}
+#b)
+simulateGame = function(rule){
+  
+  #set initial score to 0
+  score = c(0,0)
+  
+  #start the game -player1 is serving
+  server = 1
+  
+  #play the game until 1 player is reaching 2 points
+  while (max(score) < 2) {
+    
+    # Finding the probability of server winning a point
+    if (rule == 'A'){
+      
+      if (score[server] == 0){
+        prob = probPlayer1WinsPlayer1Serves
+      }
+      else{
+        prob = probPlayer1WinsPlayer2Serves
+      }
+    }
+    else{
+      
+      if(score[server]==0){
+        prob = probPlayer1WinsPlayer2Serves
+      }
+      else{
+        prob = probPlayer1WinsPlayer1Serves
+      }
+    }
+    
+    #simulate whether the server wins the point
+    if(runif(1) < prob){
+      
+      #server wins a point
+      score[server] = score[server]+1
+    }
+    else{
+      
+      #server losses a point
+      server = 3-server
+    }
+  }
+  #return length of the game
+  return(sum(score))
+}
+
+set.seed(17)
+gamesA = replicate(1000, simulateGame('A'))
+gamesB = replicate(1000, simulateGame('B'))
+```
+b)1.Estimate the expected length of a game under service rule A
+```{r}
+mean(gamesA)
+```
+b)2.Estimate the expected length of a game under service rule B
+```{r}
+mean(gamesB)
+```
+c)
+According to the outcomes of the simulation, Player 1 has the following winning chances when serving according to Rules A and B:
+Rule A: 0.538
+Rule B: 0.534
+Under service rule A, when the server is the winner of the previous point, Player 1 has slightly a better winning chance.
+
+Outcomes for the expected length of the game for Rule A and Rule B are as follows:
+Rule A: 2.451
+Rule B: 2.269
+So, games played according to rule B are typically shorter than games played according to rule A.
+
+Overall, according to the findings, we can say that service rule B is more competitive for Player 1 because it gives them a lower chance of winning and short lengthy games.
+
+d)Assumptions:
+The game is playing under same conditions.
+Both players are equally talented. Since their personal abilities are not considered here.
+
+Question 3
+a) Simulate five realizations of the random walk {𝑆𝑛,𝑛≥1}.
+```{r}
+# Initializing number of steps in the random walk
+numSteps = 100
+
+# Assigning the probability of going to right (1/2)
+probRight = 0.5
+
+# Executing 5 realizations of the random walk
+set.seed(17)
+for (i in 1:5) {
+  
+  #Initializing the random walk to zero
+  walk = rep(0, numSteps)
+  
+  #Simulating each step of random walk
+  for (j in 2 : numSteps) {
+    step = sample(c(-1, 1), size = 1, prob = c(probRight, 1 - probRight))
+    walk[j] = walk[j-1] + step
+  }
+  
+  #Plot the random walk
+  plot(walk, type = "l", main = paste0("Random Walk ", i))
+}
+
+```
+b) Discuss the aspects of the random variable 𝑆𝑛 as 𝑛 tends to infinity.
+
+The central limit theorem (CLT) is a fundamental theorem in probability theory that states that the sum of a large number of independent and identically distributed random variables will be approximately normally distributed, regardless of the distribution of the individual random variables.
+
+In the case of a random walk, Sn is the sum of n independent and identically distributed random variables, each with two possible values (+1 or -1) and equal probability of occurrence. As n increases, the CLT implies that Sn will approach a normal distribution, with mean 0 and variance n/4.
+
+This means that as n increases, the distribution of the random walk becomes more and more spread out, and the probability of the walker returning to the starting point decreases. This is because the variance of the distribution is proportional to n, while the mean remains at 0. Therefore, as n increases, the distribution becomes wider, and the probability of the walker returning to the starting point becomes smaller.
+
+Question 4
+a)Simulate 5 possible beer purchases for 10 weeks by assuming that he bought beer brand A for first week.
+```{r}
+#Define transition probability matrix P
+P = matrix(c(0.1, 0.2, 0.7, 
+              0.2, 0.4, 0.4, 
+              0.1, 0.3, 0.6), 
+            nrow = 3, ncol = 3, 
+            byrow = TRUE, 
+            dimnames = list(c("A", "B", "C"), c("A", "B", "C")))
+
+#Loop over 5 sequences of beer purchases for 10 weeks each
+for (i in 1:5) {
+  #Define initial state as "A"
+  initialState = "A"
+  
+  #Initialize the sequence with the first week's purchase
+  beerPurchases = c(initialState)
+  
+  #Simulate the rest of the purchases for each week
+  for (j in 2:10) {
+    
+    #Get the transition probabilities from the current state
+    transitionProbs = P[which(rownames(P) == initialState), ]
+    
+    # Sample the next state based on the transition probabilities
+    nextState <- sample(x = rownames(P), size = 1, prob = transitionProbs)
+    
+    # Update the current state
+    initialState <- nextState
+    
+    # Add the next purchase to the sequence
+    beerPurchases <- c(beerPurchases, initialState)
+  }
+  
+  # Print the sequence
+  cat("Possible beer purchase", i, "=", paste(beerPurchases, collapse = " "), "\n")
+}
+```
+b)Find the probability that he purchases beer brand A in first week and again buy the same brand in fifth week
+```{r}
+#b)
+#Define transition probability matrix
+P = matrix(c(0.1, 0.2, 0.7, 0.2, 0.4, 0.4, 0.1, 0.3, 0.6), nrow = 3, ncol = 3, byrow = TRUE)
+
+#Compute fourth power of transition probability matrix
+P4 = P %*% P %*% P %*% P
+
+#Extract probability of transitioning from state A to state A after four steps
+probAtoA = P4[1, 1]
+probAtoA
+```
